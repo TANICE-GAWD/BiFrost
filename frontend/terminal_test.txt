@@ -1,0 +1,21 @@
+
+  USER_ID="user-uuid-here"
+
+  # Feature 1 — Compliance API
+  curl -H "x-api-key: COMPLIANCE_API_KEY" \
+    "http://localhost:3000/api/v1/member/$USER_ID/compliance?month=2026
+  -05"
+
+  # Feature 2 — Redetermination Payload
+  curl -H "x-api-key: COMPLIANCE_API_KEY" \
+    "http://localhost:3000/api/v1/member/$USER_ID/redetermination?month
+  =2026-05"
+
+  # Feature 4 — FHIR Bundle
+  curl -H "x-api-key: COMPLIANCE_API_KEY" \
+    "http://localhost:3000/api/fhir/Observation?patient=$USER_ID&date=2
+  026-05"
+
+  # Feature 3 — Cron (simulate mid-month trigger)
+  # CRON_SECRET is not set locally so auth is skipped automatically
+  curl "http://localhost:3000/api/cron/referral-check"
