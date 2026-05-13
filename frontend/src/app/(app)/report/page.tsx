@@ -48,11 +48,9 @@ export default function ReportPage() {
   const monthSessions = allSessions.filter(s => s.activity_date >= monthStart && s.activity_date < monthEnd)
   const stats = computeStats(monthSessions)
 
-  const exportCSV = () => {
-    const rows = monthSessions.map(s => [s.activity_date, s.activity_type, `"${s.employer_org.replace(/"/g,'""')}"`, s.hours, `"${(s.description??'').replace(/"/g,'""')}"`, s.verified?'Yes':'No'].join(','))
-    const blob = new Blob(['Date,Type,Employer,Hours,Description,Verified\n' + rows.join('\n')], { type: 'text/csv' })
-    const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: `ce_${year}_${month.padStart(2,'0')}.csv` })
-    a.click(); URL.revokeObjectURL(a.href)
+  const exportPDF = () => {
+    const m = month.padStart(2, '0')
+    window.open(`/api/report/pdf?month=${year}-${m}`, '_blank')
   }
 
   const yearOptions = Array.from({ length: 3 }, (_, i) => String(now.getFullYear() - i))
@@ -72,7 +70,7 @@ export default function ReportPage() {
           <Title order={2} fw={800}>Monthly Report</Title>
           <Text c="dimmed" size="sm">Export for your state agency or health plan</Text>
         </Box>
-        <Button onClick={exportCSV} disabled={monthSessions.length === 0} size="sm" leftSection={<HugeiconsIcon icon={Download01Icon} size={15} strokeWidth={1.5} />}>Export CSV</Button>
+        <Button onClick={exportPDF} disabled={monthSessions.length === 0} size="sm" leftSection={<HugeiconsIcon icon={Download01Icon} size={15} strokeWidth={1.5} />}>Export PDF Report</Button>
       </Group>
 
       <Paper shadow="xs" p="lg" radius="lg">
