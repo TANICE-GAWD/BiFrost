@@ -159,15 +159,13 @@ export default function DashboardPage() {
                 Submit for Renewal →
               </Button>
             ) : submission.status === 'confirmed' ? (
-              <Badge color="teal" variant="light" size="lg" radius="sm"
-                style={{ display: 'block', textAlign: 'center', padding: '8px 12px' }}>
-                Coverage Confirmed for Next Month ✓
-              </Badge>
+              <Box p="sm" style={{ background: 'var(--mantine-color-teal-0)', borderRadius: 8, textAlign: 'center' }}>
+                <Text size="sm" fw={600} c="teal.7">Coverage Confirmed for Next Month ✓</Text>
+              </Box>
             ) : (
-              <Badge color="blue" variant="light" size="lg" radius="sm"
-                style={{ display: 'block', textAlign: 'center', padding: '8px 12px' }}>
-                Submitted — Awaiting State Confirmation
-              </Badge>
+              <Box p="sm" style={{ background: 'var(--mantine-color-blue-0)', borderRadius: 8, textAlign: 'center' }}>
+                <Text size="sm" fw={600} c="blue.7">Submitted — Awaiting State Confirmation</Text>
+              </Box>
             )}
           </Box>
         )}
