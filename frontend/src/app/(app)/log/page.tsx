@@ -1,8 +1,8 @@
 'use client'
 import { useState } from 'react'
-import { Stack, Title, Text, Tabs, Alert, Loader, Group, Paper, Button, Box } from '@mantine/core'
+import { Stack, Title, Text, Tabs, Alert, Loader, Group, Paper, Button, Box, Badge, Divider } from '@mantine/core'
 import { HugeiconsIcon } from '@hugeicons/react'
-import { Edit01Icon, CloudUploadIcon, CheckmarkCircle01Icon } from '@hugeicons/core-free-icons'
+import { Edit01Icon, CloudUploadIcon, CheckmarkCircle01Icon, File01Icon } from '@hugeicons/core-free-icons'
 import LogForm from '@/components/LogForm/LogForm'
 import UploadZone from '@/components/UploadZone/UploadZone'
 import ExtractionReview from '@/components/ExtractionReview/ExtractionReview'
@@ -27,6 +27,14 @@ export default function LogPage() {
   }
   const reset = () => { setUploadState('idle'); setExtraction(null); setUploadedFile(null); setExtractError('') }
 
+  const loadSample = async () => {
+    setExtractError('')
+    const res  = await fetch('/sample-paystub.pdf')
+    const blob = await res.blob()
+    const file = new File([blob], 'sample-paystub.pdf', { type: 'application/pdf' })
+    handleFileSelect(file)
+  }
+
   return (
     <Stack gap="lg">
       <Box>
@@ -34,7 +42,7 @@ export default function LogPage() {
         <Text c="dimmed" size="sm">Record your work, education, or volunteer activity</Text>
       </Box>
 
-      <Tabs defaultValue="manual" radius="md">
+      <Tabs defaultValue="upload" radius="md">
         <Tabs.List mb="lg">
           <Tabs.Tab value="manual" leftSection={<HugeiconsIcon icon={Edit01Icon} size={15} strokeWidth={1.5} />}>Manual Entry</Tabs.Tab>
           <Tabs.Tab value="upload" leftSection={<HugeiconsIcon icon={CloudUploadIcon} size={15} strokeWidth={1.5} />}>Upload Document</Tabs.Tab>
@@ -48,6 +56,33 @@ export default function LogPage() {
           {uploadState === 'idle' && (
             <Stack gap="md">
               {extractError && <Alert color="red" radius="md">{extractError}</Alert>}
+
+              <Paper
+                shadow="sm" p="lg" radius="lg"
+                style={{ background: 'var(--mantine-color-teal-0)', border: '1.5px solid var(--mantine-color-teal-3)', cursor: 'pointer' }}
+                onClick={loadSample}
+              >
+                <Group justify="space-between" align="center" wrap="nowrap">
+                  <Group gap="md" wrap="nowrap">
+                    <div style={{ background: 'var(--mantine-color-teal-6)', borderRadius: 10, padding: 10, display: 'flex', flexShrink: 0 }}>
+                      <HugeiconsIcon icon={File01Icon} size={24} color="#fff" strokeWidth={1.5} />
+                    </div>
+                    <Box>
+                      <Group gap="xs" mb={2}>
+                        <Text fw={700} size="sm">Try it with a sample pay stub</Text>
+                        <Badge color="teal" size="xs" variant="filled" radius="sm">DEMO</Badge>
+                      </Group>
+                      <Text size="xs" c="dimmed">See the AI extract employer, dates, and hours automatically no upload needed</Text>
+                    </Box>
+                  </Group>
+                  <Button size="xs" color="teal" variant="filled" style={{ flexShrink: 0 }} onClick={e => { e.stopPropagation(); loadSample() }}>
+                    Run Demo →
+                  </Button>
+                </Group>
+              </Paper>
+
+              <Divider label="or upload your own" labelPosition="center" />
+
               <UploadZone onFileSelect={handleFileSelect} />
               <Text size="xs" c="dimmed" ta="center">Supported: PDF, PNG, JPEG · Max 10 MB · AI auto-extracts employer, dates, and hours</Text>
             </Stack>
