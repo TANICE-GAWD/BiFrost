@@ -15,9 +15,9 @@ export default function ReportPage() {
   const now = new Date()
   const [year, setYear] = useState(String(now.getFullYear()))
   const [month, setMonth] = useState(String(now.getMonth() + 1))
-  const [sessions, setSessions] = useState<Session[]>([])
-  const [loading, setLoading] = useState(true)
-  const [editing, setEditing] = useState<Session | null>(null)
+  const [allSessions, setAllSessions] = useState<Session[]>([])
+  const [loading,     setLoading]     = useState(true)
+  const [editing,     setEditing]     = useState<Session | null>(null)
 
   const monthStart = `${year}-${String(month).padStart(2, '0')}-01`
   const nm = Number(month) === 12 ? 1 : Number(month) + 1
@@ -30,9 +30,8 @@ export default function ReportPage() {
     const load = async () => {
       setLoading(true)
       const { data } = await supabase.from('sessions').select('*')
-        .gte('activity_date', monthStart).lt('activity_date', monthEnd)
-        .order('activity_date', { ascending: false })
-      setSessions(data ?? [])
+        .order('activity_date', { ascending: false }).limit(500)
+      setAllSessions(data ?? [])
       setLoading(false)
     }
 
@@ -43,12 +42,14 @@ export default function ReportPage() {
       .subscribe()
 
     return () => { supabase.removeChannel(channel) }
-  }, [monthStart, monthEnd])
+  }, [])
 
-  const stats = computeStats(sessions)
+  // Everything filtered by selected period; allSessions kept for real-time subscription
+  const monthSessions = allSessions.filter(s => s.activity_date >= monthStart && s.activity_date < monthEnd)
+  const stats = computeStats(monthSessions)
 
   const exportCSV = () => {
-    const rows = sessions.map(s => [s.activity_date, s.activity_type, `"${s.employer_org.replace(/"/g,'""')}"`, s.hours, `"${(s.description??'').replace(/"/g,'""')}"`, s.verified?'Yes':'No'].join(','))
+    const rows = monthSessions.map(s => [s.activity_date, s.activity_type, `"${s.employer_org.replace(/"/g,'""')}"`, s.hours, `"${(s.description??'').replace(/"/g,'""')}"`, s.verified?'Yes':'No'].join(','))
     const blob = new Blob(['Date,Type,Employer,Hours,Description,Verified\n' + rows.join('\n')], { type: 'text/csv' })
     const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: `ce_${year}_${month.padStart(2,'0')}.csv` })
     a.click(); URL.revokeObjectURL(a.href)
@@ -63,15 +64,15 @@ export default function ReportPage() {
       <EditSessionModal
         session={editing}
         onClose={() => setEditing(null)}
-        onSaved={updated => { setSessions(prev => prev.map(s => s.id === updated.id ? updated : s)); setEditing(null) }}
-        onDeleted={id => { setSessions(prev => prev.filter(s => s.id !== id)); setEditing(null) }}
+        onSaved={updated => { setAllSessions(prev => prev.map(s => s.id === updated.id ? updated : s)); setEditing(null) }}
+        onDeleted={id => { setAllSessions(prev => prev.filter(s => s.id !== id)); setEditing(null) }}
       />
-      <Group justify="space-between" align="flex-start">
+      <Group justify="space-between" align="flex-start" wrap="wrap" gap="sm">
         <Box>
           <Title order={2} fw={800}>Monthly Report</Title>
           <Text c="dimmed" size="sm">Export for your state agency or health plan</Text>
         </Box>
-        <Button onClick={exportCSV} disabled={sessions.length === 0} size="sm" leftSection={<HugeiconsIcon icon={Download01Icon} size={15} strokeWidth={1.5} />}>Export CSV</Button>
+        <Button onClick={exportCSV} disabled={monthSessions.length === 0} size="sm" leftSection={<HugeiconsIcon icon={Download01Icon} size={15} strokeWidth={1.5} />}>Export CSV</Button>
       </Group>
 
       <Paper shadow="xs" p="lg" radius="lg">
@@ -82,12 +83,12 @@ export default function ReportPage() {
         </Group>
       </Paper>
 
-      <SimpleGrid cols={4} spacing="md">
+      <SimpleGrid cols={{ base: 2, sm: 4 }} spacing="md">
         {[
           { label: 'Total Hours',    value: stats.logged.toFixed(1),  color: 'teal'   },
           { label: 'Verified Hours', value: stats.verified.toFixed(1), color: 'teal'  },
           { label: 'Requirement',    value: `${pct}%`, color: pct >= 100 ? 'teal' : 'yellow' },
-          { label: 'Sessions',       value: String(sessions.length),  color: 'blue'   },
+          { label: 'Sessions',       value: String(monthSessions.length),  color: 'blue'   },
         ].map(({ label, value, color }) => (
           <Paper key={label} shadow="xs" p="lg" radius="lg" ta="center">
             <Text fz={28} fw={800} c={color} lh={1}>{value}</Text>
@@ -122,28 +123,28 @@ export default function ReportPage() {
         <Text fw={700} mb="sm">All Sessions</Text>
         {loading ? (
           <Stack gap="sm">{[1,2,3].map(i => <Skeleton key={i} h={64} radius="lg" />)}</Stack>
-        ) : sessions.length === 0 ? (
+        ) : monthSessions.length === 0 ? (
           <Paper shadow="xs" p="xl" radius="lg" ta="center">
-            <Text c="dimmed" size="sm">No sessions found for this period.</Text>
+            <Text c="dimmed" size="sm">No sessions in this period.</Text>
           </Paper>
         ) : (
           <Stack gap="sm">
-            {sessions.map(s => {
+            {monthSessions.map(s => {
               const date = new Date(s.activity_date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
               return (
                 <Paper key={s.id} shadow="xs" p="md" radius="lg">
-                  <Group justify="space-between" wrap="nowrap">
-                    <Group gap="md" wrap="nowrap">
-                      <Text size="sm" c="dimmed" w={44} style={{ flexShrink: 0 }}>{date}</Text>
-                      <Box style={{ minWidth: 0 }}>
-                        <Text size="sm" fw={600} style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.employer_org}</Text>
+                  <Group justify="space-between" wrap="nowrap" style={{ overflow: 'hidden' }}>
+                    <Group gap="md" wrap="nowrap" style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
+                      <Text size="sm" c="dimmed" style={{ flexShrink: 0, width: 40 }}>{date}</Text>
+                      <Box style={{ flex: 1, minWidth: 0 }}>
+                        <Text size="sm" fw={600} truncate="end">{s.employer_org}</Text>
                         {s.description && <Text size="xs" c="dimmed" lineClamp={1}>{s.description}</Text>}
                       </Box>
                     </Group>
-                    <Group gap="xs" wrap="nowrap" style={{ flexShrink: 0 }}>
+                    <Group gap={4} wrap="nowrap" style={{ flexShrink: 0, paddingLeft: 8 }}>
                       <Text fw={700} size="sm">{Number(s.hours).toFixed(1)}h</Text>
                       <Badge variant="light" size="xs" color={TYPE_COLOR[s.activity_type as keyof typeof TYPE_COLOR] ?? 'gray'}>{s.activity_type}</Badge>
-                      {s.verified && <Badge variant="light" size="xs" color="teal" leftSection={<HugeiconsIcon icon={CheckmarkCircle01Icon} size={10} strokeWidth={1.5} />}>Verified</Badge>}
+                      {s.verified && <HugeiconsIcon icon={CheckmarkCircle01Icon} size={14} color="var(--mantine-color-teal-6)" strokeWidth={1.5} />}
                       <ActionIcon variant="subtle" color="gray" size="sm" onClick={() => setEditing(s)}>
                         <HugeiconsIcon icon={PencilEdit01Icon} size={14} strokeWidth={1.5} />
                       </ActionIcon>

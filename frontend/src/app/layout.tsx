@@ -1,4 +1,5 @@
 import '@mantine/core/styles.css'
+import './globals.css'
 import type { Metadata } from 'next'
 import { ColorSchemeScript } from '@mantine/core'
 import { Providers } from './providers'

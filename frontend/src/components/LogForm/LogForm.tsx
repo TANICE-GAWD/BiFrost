@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase'
-import { Stack, Select, TextInput, NumberInput, Textarea, Button, Alert, Badge, Group, Paper } from '@mantine/core'
+import { Stack, Select, TextInput, NumberInput, Textarea, Button, Alert, Badge, Group, Paper, SimpleGrid } from '@mantine/core'
 import type { ActivityType } from '@/lib/types'
 
 interface Props {
@@ -51,14 +51,14 @@ export default function LogForm({ onSaved, defaults = {}, verified = false, docu
     <Paper shadow="xs" p="xl" radius="lg" maw={640}>
       <form onSubmit={handleSubmit}>
         <Stack gap="md">
-          <Group grow>
+          <SimpleGrid cols={{ base: 1, xs: 2 }}>
             <Select label="Activity Type" data={ACTIVITY_TYPES} value={activityType} onChange={v => v && setActivityType(v as ActivityType)} />
             <TextInput label="Employer / Organization" value={employerOrg} onChange={e => setEmployerOrg(e.target.value)} placeholder="e.g. Walgreens, Food Bank" required />
-          </Group>
-          <Group grow>
+          </SimpleGrid>
+          <SimpleGrid cols={{ base: 1, xs: 2 }}>
             <TextInput label="Date" type="date" value={activityDate} onChange={e => setActivityDate(e.target.value)} max={today} required />
             <NumberInput label="Hours" value={hours} onChange={v => setHours(v === '' ? '' : Number(v))} placeholder="e.g. 4" min={0.25} max={24} step={0.25} decimalScale={2} required />
-          </Group>
+          </SimpleGrid>
           <Textarea label="Description (optional)" value={description} onChange={e => setDescription(e.target.value)} placeholder="Brief description…" rows={3} autosize minRows={2} maxRows={5} />
           {error   && <Alert color="red"  radius="md">{error}</Alert>}
           {success && <Alert color="teal" radius="md">Session saved!</Alert>}

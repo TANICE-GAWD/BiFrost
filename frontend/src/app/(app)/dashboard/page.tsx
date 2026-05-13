@@ -61,10 +61,7 @@ export default function DashboardPage() {
     return () => { supabase.removeChannel(channel) }
   }, [])
 
-  // Progress ring counts all logged sessions; type breakdown cards use current month
-  const monthSessions = allSessions.filter(s => s.activity_date >= monthStart)
-  const stats      = computeStats(allSessions)
-  const monthStats = computeStats(monthSessions)
+  const stats = computeStats(allSessions)
   const loggedPct   = Math.min(100, (stats.logged   / stats.required) * 100)
   const verifiedPct = Math.min(100, (stats.verified / stats.required) * 100)
   const pendingPct  = Math.max(0, loggedPct - verifiedPct)
@@ -89,7 +86,7 @@ export default function DashboardPage() {
       {/* Progress card */}
       <Paper shadow="xs" p="xl" radius="lg">
         <Text fw={700} size="lg" mb="lg">Monthly Progress</Text>
-        <Group gap="xl" align="center">
+        <Group gap="xl" align="center" wrap="wrap">
           <RingProgress
             size={130} thickness={12} roundCaps
             sections={[
@@ -132,10 +129,10 @@ export default function DashboardPage() {
       </Paper>
 
       {/* By-type grid */}
-      <SimpleGrid cols={3} spacing="md">
+      <SimpleGrid cols={{ base: 1, xs: 3 }} spacing="md">
         {(['work', 'education', 'volunteer'] as const).map(type => {
           const { label, icon, color } = TYPE_CFG[type]
-          const d = monthStats.byType[type]
+          const d = stats.byType[type]
           return (
             <Paper key={type} shadow="xs" p="lg" radius="lg" ta="center">
               <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 8 }}>
@@ -171,18 +168,18 @@ export default function DashboardPage() {
               const date = new Date(s.activity_date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
               return (
                 <Paper key={s.id} shadow="xs" p="md" radius="lg">
-                  <Group justify="space-between" wrap="nowrap">
-                    <Group gap="md" wrap="nowrap">
-                      <Text size="sm" c="dimmed" w={44} style={{ flexShrink: 0 }}>{date}</Text>
-                      <Box style={{ minWidth: 0 }}>
-                        <Text size="sm" fw={600} style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.employer_org}</Text>
+                  <Group justify="space-between" wrap="nowrap" style={{ overflow: 'hidden' }}>
+                    <Group gap="md" wrap="nowrap" style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
+                      <Text size="sm" c="dimmed" style={{ flexShrink: 0, width: 40 }}>{date}</Text>
+                      <Box style={{ flex: 1, minWidth: 0 }}>
+                        <Text size="sm" fw={600} truncate="end">{s.employer_org}</Text>
                         {s.description && <Text size="xs" c="dimmed" lineClamp={1}>{s.description}</Text>}
                       </Box>
                     </Group>
-                    <Group gap="xs" wrap="nowrap" style={{ flexShrink: 0 }}>
+                    <Group gap={4} wrap="nowrap" style={{ flexShrink: 0, paddingLeft: 8 }}>
                       <Text fw={700} size="sm">{Number(s.hours).toFixed(1)}h</Text>
                       <Badge variant="light" size="xs" color={TYPE_CFG[s.activity_type as keyof typeof TYPE_CFG]?.color ?? 'gray'}>{s.activity_type}</Badge>
-                      {s.verified && <Badge variant="light" size="xs" color="teal" leftSection={<HugeiconsIcon icon={CheckmarkCircle01Icon} size={10} strokeWidth={1.5} />}>Verified</Badge>}
+                      {s.verified && <HugeiconsIcon icon={CheckmarkCircle01Icon} size={14} color="var(--mantine-color-teal-6)" strokeWidth={1.5} />}
                       <ActionIcon variant="subtle" color="gray" size="sm" onClick={() => setEditing(s)}>
                         <HugeiconsIcon icon={PencilEdit01Icon} size={14} strokeWidth={1.5} />
                       </ActionIcon>

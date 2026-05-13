@@ -1,6 +1,6 @@
 'use client'
 import { useState } from 'react'
-import { Modal, Stack, Group, Select, TextInput, NumberInput, Textarea, Button, Alert, Text } from '@mantine/core'
+import { Modal, Stack, Group, Select, TextInput, NumberInput, Textarea, Button, Alert, Text, SimpleGrid } from '@mantine/core'
 import { createClient } from '@/lib/supabase'
 import type { Session, ActivityType } from '@/lib/types'
 
@@ -61,14 +61,14 @@ export default function EditSessionModal({ session, onClose, onSaved, onDeleted 
     <Modal opened={!!session} onClose={onClose} title="Edit Session" radius="lg" size="md" centered>
       <form onSubmit={handleSave}>
         <Stack gap="md">
-          <Group grow>
+          <SimpleGrid cols={{ base: 1, xs: 2 }}>
             <Select label="Activity Type" data={ACTIVITY_TYPES} value={activityType} onChange={v => v && setActivityType(v as ActivityType)} />
             <TextInput label="Employer / Organization" value={employerOrg} onChange={e => setEmployerOrg(e.target.value)} required />
-          </Group>
-          <Group grow>
+          </SimpleGrid>
+          <SimpleGrid cols={{ base: 1, xs: 2 }}>
             <TextInput label="Date" type="date" value={activityDate} onChange={e => setActivityDate(e.target.value)} max={today} required />
             <NumberInput label="Hours" value={hours} onChange={v => setHours(v === '' ? '' : Number(v))} min={0.25} max={744} step={0.25} decimalScale={2} required />
-          </Group>
+          </SimpleGrid>
           <Textarea label="Description (optional)" value={description} onChange={e => setDescription(e.target.value)} placeholder="Brief description…" autosize minRows={2} maxRows={4} />
           {error && <Alert color="red" radius="md">{error}</Alert>}
           <Group justify="space-between" mt={4}>

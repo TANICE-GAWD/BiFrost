@@ -1,2 +1,77 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 a { text-decoration: none; color: inherit; }
+
+/* ── Shell layout ─────────────────────────────────────────────── */
+.shell-wrap   { display: flex; min-height: 100vh; }
+
+.shell-sidebar {
+  width: 240px;
+  background: #0f172a;
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0; left: 0;
+  height: 100vh;
+  z-index: 10;
+}
+
+.shell-main {
+  flex: 1;
+  margin-left: 240px;
+  padding: 32px 36px;
+  background: #f8fafc;
+  min-height: 100vh;
+}
+
+.shell-topbar { display: none; }
+
+.shell-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.55);
+  z-index: 29;
+}
+
+/* Hide close button on desktop sidebar */
+.shell-close-btn { display: none; }
+
+/* ── Mobile ───────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .shell-wrap { display: block; }
+
+  .shell-topbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 56px;
+    background: #0f172a;
+    padding: 0 16px;
+    z-index: 20;
+    border-bottom: 1px solid rgba(255,255,255,.06);
+  }
+
+  .shell-close-btn { display: flex; }
+
+  .shell-sidebar {
+    width: 260px;
+    z-index: 30;
+    transform: translateX(-100%);
+    transition: transform 0.22s ease;
+  }
+
+  .shell-sidebar.open {
+    transform: translateX(0);
+  }
+
+  .shell-backdrop.open {
+    display: block;
+  }
+
+  .shell-main {
+    margin-left: 0;
+    padding: 72px 16px 32px;
+  }
+}
