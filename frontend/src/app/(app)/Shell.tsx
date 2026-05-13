@@ -93,7 +93,7 @@ export function Shell({ children, user }: { children: React.ReactNode; user: Use
 
       {/* Main */}
       <main className="shell-main">
-        <div style={{ maxWidth: 900 }}>{children}</div>
+        <div style={{ maxWidth: 900, margin: '0 auto', width: '100%' }}>{children}</div>
       </main>
     </div>
   )
