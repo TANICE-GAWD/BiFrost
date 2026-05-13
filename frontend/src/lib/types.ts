@@ -28,6 +28,19 @@ export interface Document {
   created_at: string
 }
 
+export type SubmissionStatus = 'pending' | 'submitted' | 'confirmed' | 'failed'
+
+export interface Submission {
+  id: string
+  user_id: string
+  month: string
+  status: SubmissionStatus
+  submitted_at: string | null
+  confirmed_at: string | null
+  fortuna_ref: string | null
+  created_at: string
+}
+
 export interface ExtractionResult {
   employer: string | null
   start_date: string | null

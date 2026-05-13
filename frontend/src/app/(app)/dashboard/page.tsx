@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase'
 import { RingProgress, Paper, Group, Stack, Text, Title, Badge, SimpleGrid, Button, Skeleton, Divider, Box, ActionIcon } from '@mantine/core'
-import { computeStats, type Session } from '@/lib/types'
+import { computeStats, type Session, type Submission } from '@/lib/types'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { Briefcase01Icon, Mortarboard01Icon, CharityIcon, CheckmarkCircle01Icon, PencilEdit01Icon } from '@hugeicons/core-free-icons'
 import EditSessionModal from '@/components/EditSessionModal/EditSessionModal'
@@ -39,8 +39,15 @@ export default function DashboardPage() {
   const [allSessions, setAllSessions] = useState<Session[]>([])
   const [loading,     setLoading]     = useState(true)
   const [editing,     setEditing]     = useState<Session | null>(null)
-  const now = new Date()
-  const monthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`
+  const [submission,  setSubmission]  = useState<Submission | null>(null)
+  const [submitting,  setSubmitting]  = useState(false)
+
+  const now          = new Date()
+  const monthStart   = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`
+  const nm           = now.getMonth() === 11 ? 1 : now.getMonth() + 2
+  const ny           = now.getMonth() === 11 ? now.getFullYear() + 1 : now.getFullYear()
+  const monthEnd     = `${ny}-${String(nm).padStart(2, '0')}-01`
+  const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
 
   useEffect(() => {
     const supabase = createClient()
@@ -61,11 +68,29 @@ export default function DashboardPage() {
     return () => { supabase.removeChannel(channel) }
   }, [])
 
-  const stats = computeStats(allSessions)
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.from('submissions').select('*').eq('month', currentMonth).maybeSingle()
+      .then(({ data }) => setSubmission(data))
+  }, [currentMonth])
+
+  const monthSessions = allSessions.filter(s => s.activity_date >= monthStart && s.activity_date < monthEnd)
+  const stats       = computeStats(monthSessions)
   const loggedPct   = Math.min(100, (stats.logged   / stats.required) * 100)
   const verifiedPct = Math.min(100, (stats.verified / stats.required) * 100)
   const pendingPct  = Math.max(0, loggedPct - verifiedPct)
   const pace        = getPace(stats.logged, stats.required)
+
+  const submit = async () => {
+    setSubmitting(true)
+    const res = await fetch('/api/submission', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ month: currentMonth }),
+    })
+    if (res.ok) setSubmission(await res.json())
+    setSubmitting(false)
+  }
 
   return (
     <Stack gap="lg">
@@ -83,7 +108,6 @@ export default function DashboardPage() {
         <Button component={Link} href="/log" size="sm">+ Log Hours</Button>
       </Group>
 
-      {/* Progress card */}
       <Paper shadow="xs" p="xl" radius="lg">
         <Text fw={700} size="lg" mb="lg">Monthly Progress</Text>
         <Group gap="xl" align="center" wrap="wrap">
@@ -126,9 +150,29 @@ export default function DashboardPage() {
           </Group>
           <Text size="xs" c="dimmed" ml="auto">{Math.round(loggedPct)}% complete</Text>
         </Group>
+
+        {stats.logged >= stats.required && (
+          <Box mt="lg">
+            <Divider mb="md" />
+            {!submission || submission.status === 'failed' ? (
+              <Button size="sm" color="teal" fullWidth loading={submitting} onClick={submit}>
+                Submit for Renewal →
+              </Button>
+            ) : submission.status === 'confirmed' ? (
+              <Badge color="teal" variant="light" size="lg" radius="sm"
+                style={{ display: 'block', textAlign: 'center', padding: '8px 12px' }}>
+                Coverage Confirmed for Next Month ✓
+              </Badge>
+            ) : (
+              <Badge color="blue" variant="light" size="lg" radius="sm"
+                style={{ display: 'block', textAlign: 'center', padding: '8px 12px' }}>
+                Submitted — Awaiting State Confirmation
+              </Badge>
+            )}
+          </Box>
+        )}
       </Paper>
 
-      {/* By-type grid */}
       <SimpleGrid cols={{ base: 1, xs: 3 }} spacing="md">
         {(['work', 'education', 'volunteer'] as const).map(type => {
           const { label, icon, color } = TYPE_CFG[type]
@@ -148,7 +192,6 @@ export default function DashboardPage() {
         })}
       </SimpleGrid>
 
-      {/* Recent activity */}
       <Box>
         <Group justify="space-between" mb="sm">
           <Text fw={700} size="md">Recent Activity</Text>
