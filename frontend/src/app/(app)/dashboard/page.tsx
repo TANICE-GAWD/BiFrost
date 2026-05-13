@@ -61,9 +61,10 @@ export default function DashboardPage() {
     return () => { supabase.removeChannel(channel) }
   }, [])
 
-  // Stats computed from current-month sessions only
+  // Progress ring counts all logged sessions; type breakdown cards use current month
   const monthSessions = allSessions.filter(s => s.activity_date >= monthStart)
-  const stats = computeStats(monthSessions)
+  const stats      = computeStats(allSessions)
+  const monthStats = computeStats(monthSessions)
   const loggedPct   = Math.min(100, (stats.logged   / stats.required) * 100)
   const verifiedPct = Math.min(100, (stats.verified / stats.required) * 100)
   const pendingPct  = Math.max(0, loggedPct - verifiedPct)
@@ -134,7 +135,7 @@ export default function DashboardPage() {
       <SimpleGrid cols={3} spacing="md">
         {(['work', 'education', 'volunteer'] as const).map(type => {
           const { label, icon, color } = TYPE_CFG[type]
-          const d = stats.byType[type]
+          const d = monthStats.byType[type]
           return (
             <Paper key={type} shadow="xs" p="lg" radius="lg" ta="center">
               <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 8 }}>
